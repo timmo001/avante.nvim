@@ -323,7 +323,10 @@ function M.warn(msg, opts)
 end
 
 function M.debug(...)
-  if not require("avante.config").debug then return end
+  if not require("avante.config").debug then
+    error("Debug not enabled!")
+    return
+  end
 
   local args = { ... }
   if #args == 0 then return end
@@ -472,6 +475,7 @@ function M.is_type(type_name, v)
 
   return type(v) == type_name
 end
+
 -- luacheck: pop
 
 ---@param code string
@@ -530,12 +534,12 @@ function M.trim_line_number(line) return line:gsub("^L%d+: ", "") end
 
 function M.trim_all_line_numbers(content)
   return vim
-    .iter(vim.split(content, "\n"))
-    :map(function(line)
-      local new_line = M.trim_line_number(line)
-      return new_line
-    end)
-    :join("\n")
+      .iter(vim.split(content, "\n"))
+      :map(function(line)
+        local new_line = M.trim_line_number(line)
+        return new_line
+      end)
+      :join("\n")
 end
 
 function M.debounce(func, delay)
@@ -816,23 +820,23 @@ local severity = {
 function M.get_diagnostics(bufnr)
   if bufnr == nil then bufnr = api.nvim_get_current_buf() end
   local diagnositcs = ---@type vim.Diagnostic[]
-    vim.diagnostic.get(
-      bufnr,
-      { severity = { vim.diagnostic.severity.ERROR, vim.diagnostic.severity.WARN, vim.diagnostic.severity.HINT } }
-    )
+      vim.diagnostic.get(
+        bufnr,
+        { severity = { vim.diagnostic.severity.ERROR, vim.diagnostic.severity.WARN, vim.diagnostic.severity.HINT } }
+      )
   return vim
-    .iter(diagnositcs)
-    :map(function(diagnostic)
-      local d = {
-        content = diagnostic.message,
-        start_line = diagnostic.lnum + 1,
-        end_line = diagnostic.end_lnum and diagnostic.end_lnum + 1 or diagnostic.lnum + 1,
-        severity = severity[diagnostic.severity],
-        source = diagnostic.source,
-      }
-      return d
-    end)
-    :totable()
+      .iter(diagnositcs)
+      :map(function(diagnostic)
+        local d = {
+          content = diagnostic.message,
+          start_line = diagnostic.lnum + 1,
+          end_line = diagnostic.end_lnum and diagnostic.end_lnum + 1 or diagnostic.lnum + 1,
+          severity = severity[diagnostic.severity],
+          source = diagnostic.source,
+        }
+        return d
+      end)
+      :totable()
 end
 
 ---@param bufnr integer
