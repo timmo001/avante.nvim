@@ -68,7 +68,7 @@ function Suggestion:suggest()
   local bufnr = api.nvim_get_current_buf()
   local filetype = api.nvim_get_option_value("filetype", { buf = bufnr })
   local code_content =
-    Utils.prepend_line_number(table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n") .. "\n\n")
+      Utils.prepend_line_number(table.concat(api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n") .. "\n\n")
 
   local full_response = ""
 
@@ -145,6 +145,7 @@ L5:    pass
     on_complete = function(err)
       if err then
         Utils.error("Error while suggesting: " .. vim.inspect(err), { once = true, title = "Avante" })
+        Utils.error("Full response:" .. full_response)
         return
       end
       Utils.debug("full_response:", full_response)
@@ -167,38 +168,38 @@ L5:    pass
         end
         local current_lines = Utils.get_buf_lines(0, -1, bufnr)
         suggestions_list = vim
-          .iter(suggestions_list)
-          :map(function(suggestions)
-            local new_suggestions = vim
-              .iter(suggestions)
-              :map(function(s)
-                local lines = vim.split(s.content, "\n")
-                local new_start_row = s.start_row
-                local new_content_lines = lines
-                for i = s.start_row, s.start_row + #lines - 1 do
-                  if current_lines[i] == lines[i - s.start_row + 1] then
-                    new_start_row = i + 1
-                    new_content_lines = vim.list_slice(new_content_lines, 2)
-                  else
-                    break
-                  end
-                end
-                if #new_content_lines == 0 then return nil end
-                return {
-                  id = s.start_row,
-                  original_start_row = s.start_row,
-                  start_row = new_start_row,
-                  end_row = s.end_row,
-                  content = Utils.trim_all_line_numbers(table.concat(new_content_lines, "\n")),
-                }
-              end)
-              :filter(function(s) return s ~= nil end)
-              :totable()
-            --- sort the suggestions by start_row
-            table.sort(new_suggestions, function(a, b) return a.start_row < b.start_row end)
-            return new_suggestions
-          end)
-          :totable()
+            .iter(suggestions_list)
+            :map(function(suggestions)
+              local new_suggestions = vim
+                  .iter(suggestions)
+                  :map(function(s)
+                    local lines = vim.split(s.content, "\n")
+                    local new_start_row = s.start_row
+                    local new_content_lines = lines
+                    for i = s.start_row, s.start_row + #lines - 1 do
+                      if current_lines[i] == lines[i - s.start_row + 1] then
+                        new_start_row = i + 1
+                        new_content_lines = vim.list_slice(new_content_lines, 2)
+                      else
+                        break
+                      end
+                    end
+                    if #new_content_lines == 0 then return nil end
+                    return {
+                      id = s.start_row,
+                      original_start_row = s.start_row,
+                      start_row = new_start_row,
+                      end_row = s.end_row,
+                      content = Utils.trim_all_line_numbers(table.concat(new_content_lines, "\n")),
+                    }
+                  end)
+                  :filter(function(s) return s ~= nil end)
+                  :totable()
+              --- sort the suggestions by start_row
+              table.sort(new_suggestions, function(a, b) return a.start_row < b.start_row end)
+              return new_suggestions
+            end)
+            :totable()
         ctx.suggestions_list = suggestions_list
         ctx.current_suggestions_idx = 1
         self:show()
@@ -437,17 +438,17 @@ function Suggestion:accept()
   local row_diff = #lines - replaced_line_count
 
   ctx.suggestions_list[ctx.current_suggestions_idx] = vim
-    .iter(suggestions)
-    :filter(function(s) return s.start_row ~= suggestion.start_row end)
-    :map(function(s)
-      if s.start_row > suggestion.start_row then
-        s.original_start_row = s.original_start_row + row_diff
-        s.start_row = s.start_row + row_diff
-        s.end_row = s.end_row + row_diff
-      end
-      return s
-    end)
-    :totable()
+      .iter(suggestions)
+      :filter(function(s) return s.start_row ~= suggestion.start_row end)
+      :map(function(s)
+        if s.start_row > suggestion.start_row then
+          s.original_start_row = s.original_start_row + row_diff
+          s.start_row = s.start_row + row_diff
+          s.end_row = s.end_row + row_diff
+        end
+        return s
+      end)
+      :totable()
 
   local line_count = #lines
 
@@ -506,8 +507,8 @@ function Suggestion:setup_autocmds()
 
     local full_path = api.nvim_buf_get_name(0)
     if
-      Config.behaviour.auto_suggestions_respect_ignore
-      and Utils.is_ignored(full_path, self.ignore_patterns, self.negate_patterns)
+        Config.behaviour.auto_suggestions_respect_ignore
+        and Utils.is_ignored(full_path, self.ignore_patterns, self.negate_patterns)
     then
       return
     end
